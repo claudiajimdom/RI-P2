@@ -11,10 +11,21 @@ import org.apache.lucene.analysis.snowball.SnowballFilter;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.ngram.NGramTokenFilter;
 import org.apache.lucene.analysis.commongrams.CommonGramsFilter;
+import org.apache.lucene.analysis.shingle.ShingleFilter;
 import java.io.IOException;
 import java.io.StringReader;
 
 public class Tokenfilters {
+    public static Analyzer stardardAnalyzer() {
+        return new Analyzer() {
+            @Override
+            protected TokenStreamComponents createComponents(String fieldName) {
+                Tokenizer source = new StandardTokenizer();
+                return new TokenStreamComponents(source);
+            }
+        };
+    }
+    
     public static Analyzer lowerCaseAnalyzer() {
         return new Analyzer() {
             @Override
@@ -61,9 +72,8 @@ public class Tokenfilters {
             @Override
             protected TokenStreamComponents createComponents(String fieldName) {
                 Tokenizer source = new StandardTokenizer();
-                org.apache.lucene.analysis.shingle.ShingleFilter filter = new org.apache.lucene.analysis.shingle.ShingleFilter(source);
-                filter.setMinShingleSize(2);
-                filter.setMaxShingleSize(3);
+                ShingleFilter filter = new ShingleFilter(source,2,3);
+                
                 return new TokenStreamComponents(source, filter);
             }
         };
