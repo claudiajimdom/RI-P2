@@ -9,13 +9,6 @@ public class LoadData {
             String headerLine = br.readLine();
             if (headerLine == null) throw new IOException("CSV vacío");
 
-String[] j = parseCSVLine(headerLine);
-System.out.println("Headers:");
-for (int i = 0; i < j.length; i++) {
-    System.out.println(i + ": '" + j[i] + "'");
-}
-            
-
             // Obtener encabezados
             String[] headers = parseCSVLine(headerLine);
             int neighborhoodIndex = -1;
@@ -28,14 +21,20 @@ for (int i = 0; i < j.length; i++) {
             if (neighborhoodIndex == -1 || amenitiesIndex == -1)
                 throw new IOException("No se encontraron las columnas host_neighbourhood o amenities");
 
-          String line;
+            String line;
             int lineNumber = 2;
             while ((line = br.readLine()) != null) {
                 try {
                     String[] values = parseCSVLine(line);
+                    String neighborhood = neighborhoodIndex < values.length ? values[neighborhoodIndex] : "";
+                    String amenities = amenitiesIndex < values.length ? values[amenitiesIndex] : "";
+
+                    // Filtrar registros vacíos
+                    if (neighborhood.isEmpty() && amenities.isEmpty()) continue;
+
                     Map<String, String> record = new HashMap<>();
-                    record.put("host_neighbourhood", neighborhoodIndex < values.length ? values[neighborhoodIndex] : "");
-                    record.put("amenities", amenitiesIndex < values.length ? values[amenitiesIndex] : "");
+                    record.put("host_neighborhood", neighborhood);
+                    record.put("amenities", amenities);
                     records.add(record);
                 } catch (Exception e) {
                     System.err.println("⚠ Línea " + lineNumber + " ignorada: " + e.getMessage());
