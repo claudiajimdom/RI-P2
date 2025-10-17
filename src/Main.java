@@ -8,6 +8,7 @@ public class Main{
       for (Map<String, String> record : data) {
          System.out.println("Neighborhood: " + record.get("host_neighborhood"));
          System.out.println("Amenities: " + record.get("amenities"));
+         System.out.println("------------------------------------------------------------------------------------------------------------------");
       }
    }
 
