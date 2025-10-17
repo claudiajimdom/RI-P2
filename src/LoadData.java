@@ -5,6 +5,7 @@ public class LoadData {
 
     public static List<Map<String, String>> loadData(String filePath) throws Exception {
         List<Map<String, String>> records = new ArrayList<>();
+
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String headerLine = br.readLine();
             if (headerLine == null) throw new IOException("CSV vacío");
@@ -23,11 +24,22 @@ public class LoadData {
 
             String line;
             int lineNumber = 2;
+            StringBuilder multiline = new StringBuilder(); // Para líneas que se rompen por comillas
             while ((line = br.readLine()) != null) {
+                multiline.append(line);
+                String[] values = parseCSVLine(multiline.toString());
+
+                // Detecta si hay comillas desbalanceadas
+                if (countQuotes(multiline.toString()) % 2 != 0) {
+                    multiline.append("\n"); // continuar con la siguiente línea
+                    continue;
+                }
+
+                multiline.setLength(0); // reset para la próxima línea
+
                 try {
-                    String[] values = parseCSVLine(line);
-                    String neighborhood = neighborhoodIndex < values.length ? values[neighborhoodIndex] : "";
-                    String amenities = amenitiesIndex < values.length ? values[amenitiesIndex] : "";
+                    String neighborhood = neighborhoodIndex < values.length ? values[neighborhoodIndex].trim() : "";
+                    String amenities = amenitiesIndex < values.length ? values[amenitiesIndex].trim() : "";
 
                     // Filtrar registros vacíos
                     if (neighborhood.isEmpty() && amenities.isEmpty()) continue;
@@ -42,10 +54,11 @@ public class LoadData {
                 lineNumber++;
             }
         }
+
         return records;
     }
 
-    // Método simple para parsear líneas CSV respetando comillas
+    // Método para parsear líneas CSV tolerante a comillas mal cerradas
     private static String[] parseCSVLine(String line) {
         List<String> tokens = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
@@ -53,8 +66,9 @@ public class LoadData {
 
         for (int i = 0; i < line.length(); i++) {
             char c = line.charAt(i);
+
             if (c == '"') {
-                inQuotes = !inQuotes; // cambiar estado
+                inQuotes = !inQuotes; // alterna estado de comillas
             } else if (c == ',' && !inQuotes) {
                 tokens.add(sb.toString().trim());
                 sb.setLength(0);
@@ -65,4 +79,14 @@ public class LoadData {
         tokens.add(sb.toString().trim());
         return tokens.toArray(new String[0]);
     }
+
+    // Cuenta comillas en una línea
+    private static int countQuotes(String line) {
+        int count = 0;
+        for (char c : line.toCharArray()) {
+            if (c == '"') count++;
+        }
+        return count;
+    }
+
 }
