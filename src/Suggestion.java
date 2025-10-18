@@ -9,7 +9,7 @@ import org.apache.lucene.search.suggest.Lookup;
 
 import org.apache.lucene.search.suggest.analyzing.AnalyzingSuggester;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.RAMDirectory;
+//import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
 
 import java.io.IOException;
@@ -28,13 +28,18 @@ import org.apache.lucene.analysis.ngram.EdgeNGramTokenFilter;
 import org.apache.lucene.analysis.shingle.ShingleAnalyzerWrapper;
 import org.apache.lucene.analysis.shingle.ShingleFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
-import org.apache.lucene.analysis.standard.UAX29URLEmailAnalyzer;
+//import org.apache.lucene.analysis.standard.UAX29URLEmailAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.search.spell.DirectSpellChecker;
 import org.apache.lucene.search.suggest.analyzing.AnalyzingInfixSuggester;
 import org.apache.lucene.search.suggest.analyzing.FuzzySuggester;
 import org.apache.lucene.search.suggest.analyzing.FreeTextSuggester;
+
+// Cambios en imports
+import org.apache.lucene.analysis.email.UAX29URLEmailAnalyzer; // paquete correcto para 10.3.1
+import org.apache.lucene.store.ByteBuffersDirectory; // reemplazo de RAMDirectory
+
 
 public class Suggestion {
 
@@ -200,7 +205,8 @@ public class Suggestion {
         System.out.println("En Next Term Suggester");
         // Create a RAM directory to store the suggester index
 
-        Directory directory = new RAMDirectory();
+        //Directory directory = new RAMDirectory();
+        Directory directory = new ByteBuffersDirectory();
 
         FreeTextSuggester suggester = new FreeTextSuggester(an_index, an_query, 3, (byte) 0x20);
 
@@ -234,7 +240,10 @@ public class Suggestion {
 
     public static void InfixSuggester(String filePath, Analyzer an_index, Analyzer an_query) throws IOException {
         System.out.print("Infix Suggester .... ");
-        Directory directory = new RAMDirectory();
+        
+        //Directory directory = new RAMDirectory();
+        Directory directory = new ByteBuffersDirectory();
+
         // Create an AnalyzingInfixSuggester  
           AnalyzingInfixSuggester suggester = new AnalyzingInfixSuggester(directory, an_index, an_query,
                 3, true, false, true);
@@ -285,7 +294,9 @@ public class Suggestion {
 
     public static void PrefixSuggester(String filePath, Analyzer an_index, Analyzer an_query) throws IOException {
         System.out.print("Prefix Suggester .... ");
-        Directory directory = new RAMDirectory();
+
+        //Directory directory = new RAMDirectory();
+        Directory directory = new ByteBuffersDirectory();
 
         AnalyzingSuggester suggester = new AnalyzingSuggester(directory, "aaa",
                 an_index, an_query, AnalyzingSuggester.PRESERVE_SEP, 256, -1, true);
@@ -335,8 +346,9 @@ public class Suggestion {
         // Create a RAM directory to store the suggester index
 
         System.out.println("Fuzzy Prefix Suggester");
-        Directory directory = new RAMDirectory();
-
+        //Directory directory = new RAMDirectory();
+        Directory directory = new ByteBuffersDirectory();
+        
         FuzzySuggester suggester = new FuzzySuggester(directory, "aaa", an_index,
                 an_query);
 
