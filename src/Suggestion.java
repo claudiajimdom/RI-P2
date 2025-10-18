@@ -155,7 +155,7 @@ public class Suggestion {
     }
 
     // Iterator que soporta pares <query,freq> 
-    static class QueryFreqIterator implements InputIterator {
+    public static class QueryFreqIterator implements InputIterator {
 
         private Iterator<Map.Entry<String, Long>> iterator;
         private Map.Entry<String, Long> current;
@@ -348,7 +348,7 @@ public class Suggestion {
         System.out.println("Fuzzy Prefix Suggester");
         //Directory directory = new RAMDirectory();
         Directory directory = new ByteBuffersDirectory();
-        
+
         FuzzySuggester suggester = new FuzzySuggester(directory, "aaa", an_index,
                 an_query);
 
