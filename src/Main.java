@@ -16,12 +16,6 @@ public class Main {
 
         System.out.println("=== Sugerencias sobre listings ===");
 
-        // --- Prueba rápida del filtro de Xanalyzer (lowercase + sinónimos de emojis) ---
-        System.out.println("\n=== Prueba Xanalyzer (LowerCase + SynonymGraphFilter de emojis) ===");
-        try (Analyzer x = new Xanalyzer()) {
-            String ejemplo = "Hoy estoy :-) muy CONTENTA 😂 pero ayer estaba :-( me llamo @claudia ";
-            imprimirTokens(x, ejemplo, "Xanalyzer");
-        }
 
         // Archivos proporcionados
         String fileQueries = "data/listings_filtrado.csv";
@@ -58,6 +52,17 @@ public class Main {
         // --- Guardar nombres en archivo temporal ---
         Path tempFile = Files.createTempFile("listings_names", ".txt");
         Files.write(tempFile, listingNames);
+
+        // --- Prueba Xanalyzer con ficheros (primeros N listings) ---
+        System.out.println("\n=== Prueba Xanalyzer (LowerCase + SynonymGraphFilter) sobre listings ===");
+        int maxMuestras = 10; // número de ejemplos a mostrar
+        try (Analyzer x = new Xanalyzer()) {
+            int count = 0;
+            for (String name : listingNames) {
+                imprimirTokens(x, name, "Xanalyzer");
+                if (++count >= maxMuestras) break;
+            }
+        }
 
         // --- Construir Prefix Suggester ---
         System.out.println("\n=== Prefix Suggester ===");
