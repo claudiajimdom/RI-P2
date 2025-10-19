@@ -6,13 +6,22 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
 public class Main {
 
     public static void main(String[] args) throws IOException {
 
         System.out.println("=== Sugerencias sobre listings ===");
+
+        // --- Prueba rápida del filtro de Xanalyzer (lowercase + sinónimos de emojis) ---
+        System.out.println("\n=== Prueba Xanalyzer (LowerCase + SynonymGraphFilter de emojis) ===");
+        try (Analyzer x = new Xanalyzer()) {
+            String ejemplo = "Hoy estoy :-) muy CONTENTA 😂 pero ayer estaba :-( me llamo @claudia ";
+            imprimirTokens(x, ejemplo, "Xanalyzer");
+        }
 
         // Archivos proporcionados
         String fileQueries = "data/listings_filtrado.csv";
@@ -67,5 +76,18 @@ public class Main {
         Suggestion.NextTermSuggester(fileFrequencies, analyzer, analyzer);
 
         System.out.println("\n=== Fin de la ejecución ===");
+    }
+
+    private static void imprimirTokens(Analyzer analyzer, String text, String nombre) throws IOException {
+        System.out.println("Analizador: " + nombre + " | Texto: " + text);
+        TokenStream ts = analyzer.tokenStream("field", text);
+        CharTermAttribute term = ts.addAttribute(CharTermAttribute.class);
+        ts.reset();
+        while (ts.incrementToken()) {
+            System.out.print("[" + term.toString() + "] ");
+        }
+        ts.end();
+        ts.close();
+        System.out.println();
     }
 }

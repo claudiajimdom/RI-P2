@@ -13,14 +13,14 @@ public class Xanalyzer extends Analyzer {
 
     @Override
     protected TokenStreamComponents createComponents(String fieldName) {
-        // 1️⃣ tokens validos (@cadena , #cadena)
+        // tokens validos (@cadena , #cadena)
         Pattern cadena = Pattern.compile("\\s+"); // separa por espacio
         Tokenizer tokenizer = new PatternTokenizer(cadena, -1);
 
-        // 2️⃣ Filtro lowercase 
+        // Filtro lowercase 
         TokenStream tokenStream = new LowerCaseFilter(tokenizer);
 
-        // 3️⃣ Filtro de sinónimos para emojis
+        // Filtro de sinónimos para emojis
         try {
             SynonymMap synonymMap = buildEmojiSynonyms();
             tokenStream = new SynonymGraphFilter(tokenStream, synonymMap, true);
@@ -31,7 +31,7 @@ public class Xanalyzer extends Analyzer {
         return new TokenStreamComponents(tokenizer, tokenStream);
     }
 
-    // ✅ Diccionario de sinónimos para emojis
+    //Diccionario de sinónimos para emojis
     private SynonymMap buildEmojiSynonyms() throws IOException, ParseException {
         SynonymMap.Builder builder = new SynonymMap.Builder(true);
 
