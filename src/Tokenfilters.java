@@ -101,6 +101,17 @@ public class Tokenfilters {
         };
     }
 
+    public static Analyzer synomAnalyzer() {
+        return new Analyzer() {
+            @Override
+            protected TokenStreamComponents createComponents(String fieldName) {
+                Tokenizer source = new StandardTokenizer();
+                // Aquí se podría agregar un filtro de sinónimos si se desea
+                return new TokenStreamComponents(source);
+            }
+        };
+    }
+
     public static void mostrarTokens(Analyzer analyzer, String texto, String nombre) throws IOException {
         System.out.println("=== " + nombre + " ===");
         TokenStream ts = analyzer.tokenStream("field", new StringReader(texto));

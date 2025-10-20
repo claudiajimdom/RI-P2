@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -32,9 +33,9 @@ public class Main {
             return;
         }
 
-        System.out.println("Frecuencias cargadas:");
-        frequencies.forEach((k, v) -> System.out.println(k + " -> " + v));
-        System.out.println("Total de términos: " + frequencies.size());
+        //System.out.println("Frecuencias cargadas:");
+        //frequencies.forEach((k, v) -> System.out.println(k + " -> " + v));
+        //System.out.println("Total de términos: " + frequencies.size());
 
         // --- Leer consultas ---
         List<String> queries = Suggestion.readFileQueries(fileQueries);
@@ -53,15 +54,56 @@ public class Main {
         Path tempFile = Files.createTempFile("listings_names", ".txt");
         Files.write(tempFile, listingNames);
 
+        // --- Mostrar tokens generados por distintos analizadores ---
+        String texto1 = "En principio, el almacenamiento y recuperación de información es simple. " +
+                "Supongamos que existe un almacén de documentos y una persona (usuario del almacén) " +
+                "formula una pregunta (petición o consulta) que tiene por respuesta un conjunto de " +
+                "documentos que satisfacen la necesidad de información expresada por esa pregunta";
+
+        // 1. Standard
+        Tokenfilters.mostrarTokens(Tokenfilters.stardardAnalyzer(), texto1, "StandardAnalyzer");
+
+        // 2. LowerCase
+        Tokenfilters.mostrarTokens(Tokenfilters.lowerCaseAnalyzer(), texto1, "LowerCaseAnalyzer");
+
+        // 3. StopFilter
+        Tokenfilters.mostrarTokens(Tokenfilters.stopAnalyzer(), texto1, "StopAnalyzer");
+
+        // 4. EdgeNGram
+        Tokenfilters.mostrarTokens(Tokenfilters.edgengramAnalyzer(), texto1, "EdgeNGramAnalyzer");
+
+        // 5. Snowball (Stemming)
+        Tokenfilters.mostrarTokens(Tokenfilters.snowballAnalyzer(), texto1, "SnowballAnalyzer");
+
+        // 6. Shingle (n-gramas de palabras)
+        Tokenfilters.mostrarTokens(Tokenfilters.shingleAnalyzer(), texto1, "ShingleAnalyzer");
+
+        // 7. NGram (n-gramas de caracteres)
+        Tokenfilters.mostrarTokens(Tokenfilters.ngramAnalyzer(), texto1, "NGramAnalyzer");
+
+        // 8. CommonGramsFilter
+        Tokenfilters.mostrarTokens(Tokenfilters.commonGramsFilter(), texto1, "CommonGramsFilter");
+
+        // 9. Sinónimo (vacío por ahora)
+        Tokenfilters.mostrarTokens(Tokenfilters.synomAnalyzer(), texto1, "SynonymAnalyzer (sin filtros)");
+
+
+
         // --- Prueba Xanalyzer con ficheros (primeros N listings) ---
-        System.out.println("\n=== Prueba Xanalyzer (LowerCase + SynonymGraphFilter) sobre listings ===");
-        int maxMuestras = 10; // número de ejemplos a mostrar
-        try (Analyzer x = new Xanalyzer()) {
-            int count = 0;
-            for (String name : listingNames) {
-                imprimirTokens(x, name, "Xanalyzer");
-                if (++count >= maxMuestras) break;
+        String texto2 = "@Carlossainz55 sets the fastest first sector before @alexalbonarg snatches it from him - Albon's time is then deleted 👌 #F1 #USGP";
+        System.out.println("\n=== Prueba Xanalyzer ===");
+        try (Xanalyzer x = new Xanalyzer();
+             TokenStream tokenStream = x.tokenStream("campo", new StringReader(texto2))) {
+            CharTermAttribute termAttr = tokenStream.addAttribute(CharTermAttribute.class);
+
+            tokenStream.reset();
+            System.out.println("Tokens generados:");
+            while (tokenStream.incrementToken()) {
+                System.out.println("- " + termAttr.toString());
             }
+            tokenStream.end();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         // --- Construir Prefix Suggester ---
