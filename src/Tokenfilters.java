@@ -3,17 +3,21 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
+import org.apache.lucene.analysis.synonym.SynonymGraphFilter;
+import org.apache.lucene.analysis.synonym.SynonymMap;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.core.StopFilter;
 import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.ngram.EdgeNGramTokenFilter;
 import org.apache.lucene.analysis.snowball.SnowballFilter;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.util.CharsRef;
 import org.apache.lucene.analysis.ngram.NGramTokenFilter;
 import org.apache.lucene.analysis.commongrams.CommonGramsFilter;
 import org.apache.lucene.analysis.shingle.ShingleFilter;
 import java.io.IOException;
 import java.io.StringReader;
+import java.text.ParseException;
 
 public class Tokenfilters {
     public static Analyzer stardardAnalyzer() {
@@ -41,7 +45,7 @@ public class Tokenfilters {
             @Override
             protected TokenStreamComponents createComponents(String fieldName) {
                 Tokenizer source = new StandardTokenizer();
-                CharArraySet stopWords = StopFilter.makeStopSet("es", "de", "en");
+                CharArraySet stopWords = StopFilter.makeStopSet("es", "de", "en", "y");
                 TokenStream filter = new StopFilter(source, stopWords);
                 return new TokenStreamComponents(source, filter);
             }
@@ -106,10 +110,41 @@ public class Tokenfilters {
             @Override
             protected TokenStreamComponents createComponents(String fieldName) {
                 Tokenizer source = new StandardTokenizer();
-                // Aquí se podría agregar un filtro de sinónimos si se desea
-                return new TokenStreamComponents(source);
+                TokenStream filter = new LowerCaseFilter(source);
+
+                try {
+                    SynonymMap synonymMap = buildSynonyms();
+                    filter = new SynonymGraphFilter(filter, synonymMap, true);
+                } catch (IOException | ParseException e) {
+                    e.printStackTrace();
+                }
+                return new TokenStreamComponents(source, filter);
             }
         };
+    }
+
+     private static SynonymMap buildSynonyms() throws IOException, ParseException {
+        SynonymMap.Builder builder = new SynonymMap.Builder(true);
+
+        // Sinónimos basados en tu texto
+        builder.add(new CharsRef("información"), new CharsRef("datos"), true);
+        builder.add(new CharsRef("información"), new CharsRef("contenido"), true);
+
+        builder.add(new CharsRef("documentos"), new CharsRef("archivos"), true);
+        builder.add(new CharsRef("documentos"), new CharsRef("textos"), true);
+
+        builder.add(new CharsRef("persona"), new CharsRef("usuario"), true);
+        builder.add(new CharsRef("persona"), new CharsRef("individuo"), true);
+
+        builder.add(new CharsRef("pregunta"), new CharsRef("consulta"), true);
+        builder.add(new CharsRef("pregunta"), new CharsRef("duda"), true);
+
+        builder.add(new CharsRef("almacén"), new CharsRef("repositorio"), true);
+
+        builder.add(new CharsRef("simple"), new CharsRef("básico"), true);
+        builder.add(new CharsRef("simple"), new CharsRef("fácil"), true);
+
+        return builder.build();
     }
 
     public static void mostrarTokens(Analyzer analyzer, String texto, String nombre) throws IOException {
