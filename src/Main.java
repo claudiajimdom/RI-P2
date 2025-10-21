@@ -90,7 +90,7 @@ public class Main {
 
 
         // --- Prueba Xanalyzer con ficheros (primeros N listings) ---
-        String texto2 = "@Carlossainz55 😊 sets the fastest first sector before @alexalbonarg snatches it from him - Albon's time is then deleted 😱 #F1 #USGP";
+        String texto2 = "@Carlossainz55 😊 sets the fastest first sector before @alexalbonarg snatches it from him - Albon's time is then deleted 😱 #f1 #usgp";
         System.out.println("\n=== Prueba Xanalyzer ===");
         try (Xanalyzer x = new Xanalyzer();
              TokenStream tokenStream = x.tokenStream("campo", new StringReader(texto2))) {
@@ -99,8 +99,9 @@ public class Main {
             tokenStream.reset();
             System.out.println("Tokens generados:");
             while (tokenStream.incrementToken()) {
-                System.out.println("- " + termAttr.toString());
+                System.out.print("[" + termAttr.toString() + "] ");
             }
+            System.out.println();
             tokenStream.end();
         } catch (IOException e) {
             e.printStackTrace();
