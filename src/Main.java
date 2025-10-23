@@ -14,6 +14,12 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.StopAnalyzer;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
+import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.core.SimpleAnalyzer;
+
+
+
 public class Main {
 
     public static void main(String[] args) throws IOException {
@@ -25,8 +31,26 @@ public class Main {
         String fileQueries = "data/listings_filtrado.csv";
         String fileFrequencies = "data/listings_frecuencia.csv";
 
+        String[] stopWords = {
+            "a", "an", "and", "are", "as", "at", "be", "by",
+            "for", "from", "has", "he", "in", "is", "it", "its",
+            "of", "on", "that", "the", "to", "was", "were", "will", "with"
+        };
+
+        // Convertir a CharArraySet
+        CharArraySet stop = new CharArraySet(Arrays.asList(stopWords), true);
+
         // Analizador estándar
         Analyzer analyzer = new StandardAnalyzer();
+
+        //Analizadores para pruebas con dataset Airbnb
+        Analyzer keywAnalyzer = new KeywordAnalyzer();
+        Analyzer whitAnalyzer = new WhitespaceAnalyzer();
+        Analyzer simpAnalyzer = new SimpleAnalyzer();
+        Analyzer stopAnalyzer = new StopAnalyzer(stop);
+        Analyzer stanalyzer = new StandardAnalyzer();
+        Analyzer engAnalyzer = new EnglishAnalyzer();
+        Analyzer Xanalyzer = new Xanalyzer();
 
         // --- Leer frecuencias ---
         Map<String, Long> frequencies = Utils.readFrequencies(fileFrequencies);
@@ -39,6 +63,11 @@ public class Main {
         //System.out.println("Frecuencias cargadas:");
         //frequencies.forEach((k, v) -> System.out.println(k + " -> " + v));
         //System.out.println("Total de términos: " + frequencies.size());
+
+        // Archivos proporcionados
+        String fileQueries_airbnb = "data/listings_filtrado.csv";
+        String fileFrequencies_airbnb = "data/listings_frecuencia.csv";
+
 
         // --- Leer consultas ---
         List<String> queries = Suggestion.readFileQueries(fileQueries);
@@ -90,13 +119,11 @@ public class Main {
         // 9. Sinónimo (vacío por ahora)
         Tokenfilters.mostrarTokens(Tokenfilters.synomAnalyzer(), texto1, "SynonymAnalyzer (sin filtros)");
 
-
-
         // --- Prueba Xanalyzer con ficheros (primeros N listings) ---
         String texto2 = "@Carlossainz55 😊 sets the fastest first sector before @alexalbonarg snatches it from him - Albon's time is then deleted 😱 #f1 #usgp";
         System.out.println("\n=== Prueba Xanalyzer ===");
         try (Xanalyzer x = new Xanalyzer();
-             TokenStream tokenStream = x.tokenStream("campo", new StringReader(texto2))) {
+            TokenStream tokenStream = x.tokenStream("campo", new StringReader(texto2))) {
             CharTermAttribute termAttr = tokenStream.addAttribute(CharTermAttribute.class);
 
             tokenStream.reset();
@@ -109,6 +136,7 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        
 
         // --- Construir Prefix Suggester ---
         System.out.println("\n=== Prefix Suggester ===");
@@ -125,95 +153,6 @@ public class Main {
         // --- Construir FreeText Suggester ---
         System.out.println("\n=== FreeText Suggester ===");
         Suggestion.NextTermSuggester(fileFrequencies, analyzer, analyzer);
-
-        System.out.println("\n=== Fin de la ejecución ===");
-    }
-
-    private static void imprimirTokens(Analyzer analyzer, String text, String nombre) throws IOException {
-        System.out.println("Analizador: " + nombre + " | Texto: " + text);
-        TokenStream ts = analyzer.tokenStream("field", text);
-        CharTermAttribute term = ts.addAttribute(CharTermAttribute.class);
-        ts.reset();
-        while (ts.incrementToken()) {
-            System.out.print("[" + term.toString() + "] ");
-        }
-        ts.end();
-        ts.close();
-        System.out.println();
-    }*/
-
-
-    public static void main(String[] args) throws IOException {
-
-        System.out.println("=== Sugerencias sobre listings ===");
-
-        // Archivos proporcionados
-        String fileQueries = "data/listings_filtrado.csv";
-        String fileFrequencies = "data/listings_frecuencia.csv";
-
-
-
-
-        //pruebaANALYZER
-
-
-
-    
-
-        //Analyzer keywAnalyzer = new KeywordAnalyzer();
-        Analyzer whitAnalyzer = new WhitespaceAnalyzer();
-        Analyzer simpAnalyzer = new SimpleAnalyzer();
-        //Analyzer stopAnalyzer = new StopAnalyzer();
-        Analyzer stanalyzer = new StandardAnalyzer();
-        Analyzer UAXAnalyzer = new UAX29URLEmailAnalyzer();
-        Analyzer engAnalyzer = new EnglishAnalyzer();
-        Analyzer spaAnalyzer = new SpanishAnalyzer();
-        Analyzer Xanalyzer = new Xanalyzer();
-
-        // --- Leer frecuencias ---
-        Map<String, Long> frequencies = Utils.readFrequencies(fileFrequencies);
-
-        if (frequencies.isEmpty()) {
-            System.out.println("El archivo de frecuencias está vacío o no se pudo leer.");
-            return;
-        }
-
-        /*System.out.println("Frecuencias cargadas:");
-        frequencies.forEach((k, v) -> System.out.println(k + " -> " + v));
-        System.out.println("Total de términos: " + frequencies.size());*/
-
-        // --- Leer consultas ---
-        List<String> queries = Suggestion.readFileQueries(fileQueries);
-        if (!queries.isEmpty() && queries.get(0).startsWith("id,")) {
-            queries.remove(0); // Ignorar cabecera
-        }
-        System.out.println("Total de consultas: " + queries.size());
-
-        // --- Extraer solo los nombres de los listings ---
-        List<String> listingNames = queries.stream()
-                .map(line -> line.split(",")[0].replaceAll("\"", "").trim())
-                .distinct()
-                .collect(Collectors.toList());
-
-        // --- Guardar nombres en archivo temporal ---
-        Path tempFile = Files.createTempFile("listings_names", ".txt");
-        Files.write(tempFile, listingNames);
-
-        // --- Construir Prefix Suggester ---
-        System.out.println("\n=== Prefix Suggester ===");
-        Suggestion.PrefixSuggester(tempFile.toString(), stanalyzer, stanalyzer);
-
-        // --- Construir Fuzzy Suggester ---
-        System.out.println("\n=== Fuzzy Suggester ===");
-        Suggestion.FuzzyPrefixSuggester(tempFile.toString(), stanalyzer, stanalyzer);
-
-        // --- Construir Infix Suggester ---
-        System.out.println("\n=== Infix Suggester ===");
-        Suggestion.InfixSuggester(tempFile.toString(), stanalyzer, stanalyzer);
-
-        // --- Construir FreeText Suggester ---
-        System.out.println("\n=== FreeText Suggester ===");
-        Suggestion.NextTermSuggester(fileFrequencies, stanalyzer, stanalyzer);
 
         System.out.println("\n=== Fin de la ejecución ===");
     }
