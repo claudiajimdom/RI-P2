@@ -10,20 +10,13 @@ import java.util.stream.Collectors;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.core.SimpleAnalyzer;
-import org.apache.lucene.analysis.core.StopAnalyzer;
-import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene.analysis.email.UAX29URLEmailAnalyzer;
-import org.apache.lucene.analysis.en.EnglishAnalyzer;
-import org.apache.lucene.analysis.es.SpanishAnalyzer;
-import org.apache.lucene.analysis.shingle.ShingleAnalyzerWrapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.StopAnalyzer;
 public class Main {
 
-    /*public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException {
 
         System.out.println("=== Sugerencias sobre listings ===");
 
@@ -39,7 +32,7 @@ public class Main {
         Map<String, Long> frequencies = Utils.readFrequencies(fileFrequencies);
 
         if (frequencies.isEmpty()) {
-            System.out.println("El archivo de frecuencias está vacío o no se pudo leer.");
+            System.out.println("¡Atención! El archivo de frecuencias está vacío o no se pudo leer.");
             return;
         }
 
@@ -100,7 +93,7 @@ public class Main {
 
 
         // --- Prueba Xanalyzer con ficheros (primeros N listings) ---
-        String texto2 = "@Carlossainz55 sets the fastest first sector before @alexalbonarg snatches it from him - Albon's time is then deleted 👌 #F1 #USGP";
+        String texto2 = "@Carlossainz55 😊 sets the fastest first sector before @alexalbonarg snatches it from him - Albon's time is then deleted 😱 #f1 #usgp";
         System.out.println("\n=== Prueba Xanalyzer ===");
         try (Xanalyzer x = new Xanalyzer();
              TokenStream tokenStream = x.tokenStream("campo", new StringReader(texto2))) {
@@ -109,8 +102,9 @@ public class Main {
             tokenStream.reset();
             System.out.println("Tokens generados:");
             while (tokenStream.incrementToken()) {
-                System.out.println("- " + termAttr.toString());
+                System.out.print("[" + termAttr.toString() + "] ");
             }
+            System.out.println();
             tokenStream.end();
         } catch (IOException e) {
             e.printStackTrace();
@@ -157,18 +151,23 @@ public class Main {
         String fileQueries = "data/listings_filtrado.csv";
         String fileFrequencies = "data/listings_frecuencia.csv";
 
-        CharArraySet stopWords = new CharArraySet(
-            Arrays.asList("the", "is", "and", "a", "of", "to", "in"),
-            true // ignora mayúsculas/minúsculas
-        );
 
-        Analyzer keywAnalyzer = new KeywordAnalyzer();
-        Analyzer wAnalyzer = new WhitespaceAnalyzer();
+
+
+        //pruebaANALYZER
+
+
+
+    
+
+        //Analyzer keywAnalyzer = new KeywordAnalyzer();
+        Analyzer whitAnalyzer = new WhitespaceAnalyzer();
         Analyzer simpAnalyzer = new SimpleAnalyzer();
-        Analyzer stopAnalyzer = new StopAnalyzer(stopWords);
-        Analyzer standAnalyzer = new StandardAnalyzer();
-        Analyzer spanishAnalyzer = new SpanishAnalyzer();
-        Analyzer englishAnalyzer = new EnglishAnalyzer();
+        //Analyzer stopAnalyzer = new StopAnalyzer();
+        Analyzer stanalyzer = new StandardAnalyzer();
+        Analyzer UAXAnalyzer = new UAX29URLEmailAnalyzer();
+        Analyzer engAnalyzer = new EnglishAnalyzer();
+        Analyzer spaAnalyzer = new SpanishAnalyzer();
         Analyzer Xanalyzer = new Xanalyzer();
 
         // --- Leer frecuencias ---
@@ -179,9 +178,9 @@ public class Main {
             return;
         }
 
-        System.out.println("Frecuencias cargadas:");
+        /*System.out.println("Frecuencias cargadas:");
         frequencies.forEach((k, v) -> System.out.println(k + " -> " + v));
-        System.out.println("Total de términos: " + frequencies.size());
+        System.out.println("Total de términos: " + frequencies.size());*/
 
         // --- Leer consultas ---
         List<String> queries = Suggestion.readFileQueries(fileQueries);
@@ -202,19 +201,19 @@ public class Main {
 
         // --- Construir Prefix Suggester ---
         System.out.println("\n=== Prefix Suggester ===");
-        Suggestion.PrefixSuggester(tempFile.toString(), standAnalyzer, standAnalyzer);
+        Suggestion.PrefixSuggester(tempFile.toString(), stanalyzer, stanalyzer);
 
         // --- Construir Fuzzy Suggester ---
         System.out.println("\n=== Fuzzy Suggester ===");
-        Suggestion.FuzzyPrefixSuggester(tempFile.toString(), standAnalyzer, standAnalyzer);
+        Suggestion.FuzzyPrefixSuggester(tempFile.toString(), stanalyzer, stanalyzer);
 
         // --- Construir Infix Suggester ---
         System.out.println("\n=== Infix Suggester ===");
-        Suggestion.InfixSuggester(tempFile.toString(), standAnalyzer, standAnalyzer);
+        Suggestion.InfixSuggester(tempFile.toString(), stanalyzer, stanalyzer);
 
         // --- Construir FreeText Suggester ---
         System.out.println("\n=== FreeText Suggester ===");
-        Suggestion.NextTermSuggester(fileFrequencies, standAnalyzer, standAnalyzer);
+        Suggestion.NextTermSuggester(fileFrequencies, stanalyzer, stanalyzer);
 
         System.out.println("\n=== Fin de la ejecución ===");
     }

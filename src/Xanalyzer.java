@@ -5,6 +5,8 @@ import org.apache.lucene.analysis.synonym.SynonymGraphFilter;
 import org.apache.lucene.analysis.synonym.SynonymMap;
 import org.apache.lucene.util.CharsRef;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.regex.Pattern;
@@ -15,11 +17,14 @@ public class Xanalyzer extends Analyzer {
 
     @Override
     protected TokenStreamComponents createComponents(String fieldName) {
-        // tokens validos (@cadena , #cadena)
-        Pattern cadena = Pattern.compile("\\s+"); // separa por espacio
-        Tokenizer tokenizer = new PatternTokenizer(cadena, -1);
+        // Patrón que captura: emojis completos (con variantes), palabras, @menciones, #hashtags
+        Pattern tokenPattern = Pattern.compile(
+            "[\\p{So}\\p{Sk}\\p{Sm}][\\p{M}\\uFE0F\\u200D]*" + // Emojis con modificadores y variantes
+            "|[@#]?[\\p{L}\\p{N}_]+"  // Palabras, @menciones, #hashtags
+        );
+        Tokenizer tokenizer = new PatternTokenizer(tokenPattern, 0);
 
-        // Filtro lowercase 
+        // Filtro lowercase (los emojis no se afectan)
         TokenStream tokenStream = new LowerCaseFilter(tokenizer);
 
         // Filtro de sinónimos para emoticonos
@@ -33,28 +38,37 @@ public class Xanalyzer extends Analyzer {
         return new TokenStreamComponents(tokenizer, tokenStream);
     }
 
-    //Diccionario de sinónimos para emoticonos
+    //Diccionario de sinónimos para emoticonos (cargado desde archivo CSV)
     private SynonymMap buildEmojiSynonyms() throws IOException, ParseException {
         SynonymMap.Builder builder = new SynonymMap.Builder(true);
-
-
-        builder.add(new CharsRef("😊"), new CharsRef("feliz"), true);
-        builder.add(new CharsRef("😡​"), new CharsRef("enfadado"), true);
-        builder.add(new CharsRef("😢"), new CharsRef("triste"), true);
-        builder.add(new CharsRef("😂"), new CharsRef("risa"), true);
-        builder.add(new CharsRef("😍"), new CharsRef("enamorado"), true);
-        builder.add(new CharsRef("😎"), new CharsRef("guay"), true);
-        builder.add(new CharsRef("😴"), new CharsRef("cansado"), true);
-        builder.add(new CharsRef("🤔"), new CharsRef("pensativo"), true);
-        builder.add(new CharsRef("😱​"), new CharsRef("asombrado"), true);
-        builder.add(new CharsRef("👌​"), new CharsRef("perfecto"), true);
-        builder.add(new CharsRef("👍"), new CharsRef("bien"), true);
-        builder.add(new CharsRef("👎"), new CharsRef("mal"), true);
-        builder.add(new CharsRef("🙏"), new CharsRef("gracias"), true);
-        builder.add(new CharsRef("💪"), new CharsRef("fuerza"), true);
-        builder.add(new CharsRef("🔥"), new CharsRef("genial"), true);
-        builder.add(new CharsRef("❤️"), new CharsRef("amor"), true);
-        builder.add(new CharsRef("😱\uFE0F"), new CharsRef("asombrado"), true);
+        
+        // Leer diccionario desde archivo CSV
+        String filePath = "data/emoticonos.csv";
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            boolean firstLine = true;
+            while ((line = reader.readLine()) != null) {
+                // Ignorar la cabecera del CSV
+                if (firstLine) {
+                    firstLine = false;
+                    continue;
+                }
+                
+                // Ignorar líneas vacías
+                if (line.trim().isEmpty()) {
+                    continue;
+                }
+                
+                // Busca el sinónimo al lado del emoticono
+                String[] parts = line.split(",");
+                if (parts.length == 2) {
+                    String emoji = parts[0].trim();
+                    String synonym = parts[1].trim();
+                    builder.add(new CharsRef(emoji), new CharsRef(synonym), true);
+                }
+            }
+        }
+        
         return builder.build();
     }
 }
