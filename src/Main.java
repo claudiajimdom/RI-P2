@@ -2,11 +2,13 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.analysis.core.StopAnalyzer;
@@ -17,7 +19,8 @@ import org.apache.lucene.analysis.es.SpanishAnalyzer;
 import org.apache.lucene.analysis.shingle.ShingleAnalyzerWrapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
+import org.apache.lucene.analysis.core.StopAnalyzer;
 public class Main {
 
     /*public static void main(String[] args) throws IOException {
@@ -154,23 +157,18 @@ public class Main {
         String fileQueries = "data/listings_filtrado.csv";
         String fileFrequencies = "data/listings_frecuencia.csv";
 
+        CharArraySet stopWords = new CharArraySet(
+            Arrays.asList("the", "is", "and", "a", "of", "to", "in"),
+            true // ignora mayúsculas/minúsculas
+        );
 
-
-
-        //pruebaANALYZER
-
-
-
-    
-
-        //Analyzer keywAnalyzer = new KeywordAnalyzer();
-        Analyzer whitAnalyzer = new WhitespaceAnalyzer();
+        Analyzer keywAnalyzer = new KeywordAnalyzer();
+        Analyzer wAnalyzer = new WhitespaceAnalyzer();
         Analyzer simpAnalyzer = new SimpleAnalyzer();
-        //Analyzer stopAnalyzer = new StopAnalyzer();
-        Analyzer stanalyzer = new StandardAnalyzer();
-        Analyzer UAXAnalyzer = new UAX29URLEmailAnalyzer();
-        Analyzer engAnalyzer = new EnglishAnalyzer();
-        Analyzer spaAnalyzer = new SpanishAnalyzer();
+        Analyzer stopAnalyzer = new StopAnalyzer(stopWords);
+        Analyzer standAnalyzer = new StandardAnalyzer();
+        Analyzer spanishAnalyzer = new SpanishAnalyzer();
+        Analyzer englishAnalyzer = new EnglishAnalyzer();
         Analyzer Xanalyzer = new Xanalyzer();
 
         // --- Leer frecuencias ---
@@ -181,9 +179,9 @@ public class Main {
             return;
         }
 
-        /*System.out.println("Frecuencias cargadas:");
+        System.out.println("Frecuencias cargadas:");
         frequencies.forEach((k, v) -> System.out.println(k + " -> " + v));
-        System.out.println("Total de términos: " + frequencies.size());*/
+        System.out.println("Total de términos: " + frequencies.size());
 
         // --- Leer consultas ---
         List<String> queries = Suggestion.readFileQueries(fileQueries);
@@ -204,19 +202,19 @@ public class Main {
 
         // --- Construir Prefix Suggester ---
         System.out.println("\n=== Prefix Suggester ===");
-        Suggestion.PrefixSuggester(tempFile.toString(), stanalyzer, stanalyzer);
+        Suggestion.PrefixSuggester(tempFile.toString(), standAnalyzer, standAnalyzer);
 
         // --- Construir Fuzzy Suggester ---
         System.out.println("\n=== Fuzzy Suggester ===");
-        Suggestion.FuzzyPrefixSuggester(tempFile.toString(), stanalyzer, stanalyzer);
+        Suggestion.FuzzyPrefixSuggester(tempFile.toString(), standAnalyzer, standAnalyzer);
 
         // --- Construir Infix Suggester ---
         System.out.println("\n=== Infix Suggester ===");
-        Suggestion.InfixSuggester(tempFile.toString(), stanalyzer, stanalyzer);
+        Suggestion.InfixSuggester(tempFile.toString(), standAnalyzer, standAnalyzer);
 
         // --- Construir FreeText Suggester ---
         System.out.println("\n=== FreeText Suggester ===");
-        Suggestion.NextTermSuggester(fileFrequencies, stanalyzer, stanalyzer);
+        Suggestion.NextTermSuggester(fileFrequencies, standAnalyzer, standAnalyzer);
 
         System.out.println("\n=== Fin de la ejecución ===");
     }
