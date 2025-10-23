@@ -64,11 +64,6 @@ public class Main {
         //frequencies.forEach((k, v) -> System.out.println(k + " -> " + v));
         //System.out.println("Total de términos: " + frequencies.size());
 
-        // Archivos proporcionados
-        String fileQueries_airbnb = "data/listings_filtrado.csv";
-        String fileFrequencies_airbnb = "data/listings_frecuencia.csv";
-
-
         // --- Leer consultas ---
         List<String> queries = Suggestion.readFileQueries(fileQueries);
         if (!queries.isEmpty() && queries.get(0).startsWith("id,")) {
